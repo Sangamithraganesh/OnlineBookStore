@@ -1,0 +1,275 @@
+﻿@{
+    ViewBag.Title = "Bodhidharma Heritage Books ";
+}
+
+<h2> <i>Bodhidharma Heritage Books</i> </h2>
+
+<script src="~/Scripts/jquery-3.3.1.min.js"></script>
+
+<script type="text/javascript">
+
+
+
+    $(document).ready(function () {
+        AllBookDetails();
+    });
+
+    function AllBookDetails() {
+        var optAu;
+        var optPub;
+        $("#Booktbl").append('<tbody id="data-container">');
+        var dlAurthor = $("#dlAurthor");
+        dlAurthor.empty();
+        var dlPub = $("#dlPublisher");
+        dlPub.empty();
+        var dladup='';
+        var dlPubdup='';
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:51313/api/BookDetails/GetBookDetails", //URI
+            dataType: "json",
+            data: { "actiontype": "All", "author": $('#txtAuthor').val(), "publisher": $('#txtPublisher').val() },
+            success: function (data) {
+                var bookJsonObject = data;
+                BuildRow(data);
+                contentType: "application/json";
+                $.each(bookJsonObject, function (i, objBook) {
+                    if (dladup.indexOf(objBook.AuthorName) == -1) {
+                         optAu = $("<option></option>").attr("value", objBook.AuthorName);
+                        dlAurthor.append(optAu);
+                        dladup = dladup + objBook.AuthorName;
+                    }
+                    if (dlPubdup.indexOf(objBook.BookName) == -1) {
+                        optPub = $("<option></option>").attr("value", objBook.BookName);
+                        dlPub.append(optPub);
+                         dlPubdup = dlPubdup + objBook.BookName;
+                    }
+
+                });
+                $("#Booktbl").append('</tbody>');
+
+            },
+            error: function (xhr) {
+                alert(xhr.responseText);
+            }
+        });
+
+    }
+    function Search() {
+
+        LoadTable("search", $('#txtAuthor').val(), $('#txtPublisher').val());
+    }
+
+
+
+    function LoadTable(serType, aurName, pubName) {
+        $("#Booktbl").append('<tbody id="data-container">');
+        $("#Booktbl tbody").children().remove()
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:51313/api/BookDetails/GetBookDetails", //URI
+            dataType: "json",
+            data: { "actiontype": serType, "author": aurName, "publisher": pubName },
+            success: function (data) {
+                BuildRow(data);
+            },
+            error: function (xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+    function BuildRow(data) {
+        var bookJsonObject = data;
+        contentType: "application/json";
+        $.each(bookJsonObject, function (i, objBook) {
+            $("#Booktbl").append('<tr><td width="50px">' + objBook.BookId +
+                '</td><td width="50px">' + objBook.BookName +
+                '</td><td width="50px">' + objBook.AuthorName +
+                '</td><td width="50px">' + objBook.BookCategory +
+                '</td><td width="50px">' + objBook.Edition +
+                '</td><td width="50px">' + objBook.Price +
+                '</td>'
+                + '</tr>');
+
+        });
+        $("#Booktbl").append('</tbody>');
+
+    }
+
+    function AddBook() {
+        $("#Booktbl").append('<tbody id="data-container">');
+        $("#Booktbl tbody").children().remove()
+        var bookDetail = {};
+        bookDetail.BookName = $('#txtBookName').val();
+        bookDetail.AuthorName = $('#txtAuthorName').val();
+        bookDetail.BookCategory = $('#txtBookCategory').val();
+        bookDetail.Edition = $('#txtEdition').val();
+        bookDetail.Price = $('#txtPrice').val();
+        bookDetail.BookId = 0;
+
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:51313/api/BookDetails/AddNewBook", //URI
+            contentType: "application/json",
+            data: JSON.stringify(bookDetail),
+            success: function (data) {
+                BuildRow(data);
+                $('#txtBookName').val = "";
+                $('#txtAuthorName').val = "";
+                $('#txtBookCategory').val = "";
+                $('#txtEdition').val = "";
+                $('#txtPrice').val = "";
+            },
+            error: function (xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+    function Login() {
+       var user = $('#txtUserID').val();
+        var pass = $('#txtPass').val();
+        var userDetails = {};
+        userDetails.UserId = user;
+        userDetails.Password = pass;
+   
+         $.ajax({
+            type: "POST",
+            url: "http://localhost:51313/api/BookDetails/CheckUser", //URI
+            contentType: "application/json",
+             data: JSON.stringify(userDetails), 
+            success: function (data) {
+              //  alert(data);
+                if (data == 'admin') {
+                    $('#divLogin').css('display', 'none');
+                    $('#divAdmin').css('display', 'block');
+                    $('#divTbl').css('display', 'block');
+                      $('#divSearch').css('display','none');
+                }
+                else {
+                      $('#divLogin').css('display', 'none');
+                    $('#divAdmin').css('display', 'none');
+                    $('#divTbl').css('display', 'block');
+                    $('#divSearch').css('display','block');
+                }
+
+            },
+            error: function (xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+
+</script>
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    #pagination {
+        width: 100%;
+        text-align: center;
+    }
+
+        #pagination ul li {
+            display: inline;
+            margin-left: 10px;
+        }
+</style>
+@using (Html.BeginForm())
+{
+    <div id="divLogin">
+        <table>
+            <tr><td>User Id</td><td> <input class="form-control" id="txtUserID" name="txtUserID" type="text" value="" /></td></tr>
+            <tr><td>Password</td><td> <input class="form-control" id="txtPass" name="txtPass" type="password" value=""  /></td></tr>
+            <tr><td></td><td><button type="button" onclick="Login();">Login</button></td></tr>
+        </table>
+    </div>
+    <div id="divAdmin" style="display:none">
+
+        <table>
+            <tr>
+                <td>BookName</td>
+                <td>
+                    <input class="form-control" id="txtBookName" name="txtBookName" type="text" value="" />
+                </td>
+                <td>AuthorName</td>
+                <td> <input class="form-control" id="txtAuthorName" name="txtAuthorName" type="text" value="" /></td>
+            </tr>
+            <tr>
+                <td>BookCategory</td>
+                <td> <input class="form-control" id="txtBookCategory" name="txtBookCategory" type="text" value="" /></td>
+                <td>Edition</td>
+                <td> <input class="form-control" id="txtEdition" name="txtEdition" type="text" value="" /></td>
+            </tr>
+            <tr>
+                <td>Price</td>
+                <td> <input class="form-control" id="txtPrice" name="txtPrice" type="text" value="" /></td>
+                <td></td>
+                <td><button type="button" onclick="AddBook();">Add Book</button> </td>
+            </tr>
+        </table>
+
+
+
+    </div>
+    <div id="divSearch" style="display:none">
+        <table>
+            <tr>
+                <td>
+                    <label> Author Name</label>
+
+                    <input class="form-control"
+                           id="txtAuthor"
+                           name="txtAuthor"
+                           type="text"
+                           value="" list="dlAurthor" />
+                    <datalist id="dlAurthor"></datalist>
+
+                </td>
+                <td>
+                    <label>Publisher </label>
+                    <input class="form-control"
+                           id="txtPublisher"
+                           name="txtPublisher"
+                           type="text"
+                           value="" list="dlPublisher" />
+                    <datalist id="dlPublisher"></datalist>
+                </td>
+                <td>
+                    <button type="button" onclick="Search();">Search</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="divTbl" style="display:none">
+        <div style="text-align:center">
+            <table id="Booktbl">
+                <thead>
+                    <tr>
+                        <th>BookId</th>
+                        <th>BookName</th>
+                        <th>AuthorName</th>
+                        <th>BookCategory</th>
+                        <th>Edition</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+            </table>
+
+            <div id="pagination"></div>
+        </div>
+    </div>
+
+}
